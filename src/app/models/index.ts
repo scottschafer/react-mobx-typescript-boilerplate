@@ -1,3 +1,3 @@
-import TodoModel from './TodoModel';
+import WidgetModel from './WidgetModel';
 
-export { TodoModel };
+export { WidgetModel };

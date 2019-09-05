@@ -1,143 +1,180 @@
-var webpack = require('webpack');
-var path = require('path');
+const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-// variables
-var isProduction =
-  process.argv.indexOf('-p') >= 0 || process.env.NODE_ENV === 'production';
-var sourcePath = path.join(__dirname, './src');
-var outPath = path.join(__dirname, './build');
+const path = require('path');
 
-// plugins
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-var MiniCssExtractPlugin = require('mini-css-extract-plugin');
-var WebpackCleanupPlugin = require('webpack-cleanup-plugin');
+const sourcePath = path.resolve(__dirname, 'src');
+const distPath = path.resolve(__dirname, 'build_dist');
 
-module.exports = {
-  context: sourcePath,
-  entry: {
-    app: './main.tsx'
-  },
-  output: {
-    path: outPath,
-    filename: isProduction ? '[contenthash].js' : '[hash].js',
-    chunkFilename: isProduction ? '[name].[contenthash].js' : '[name].[hash].js'
-  },
-  target: 'web',
-  resolve: {
-    extensions: ['.js', '.ts', '.tsx'],
-    // Fix webpack's default behavior to not load packages with jsnext:main module
-    // (jsnext:main directs not usually distributable es6 format, but es6 sources)
-    mainFields: ['module', 'browser', 'main'],
-    alias: {
-      app: path.resolve(__dirname, 'src/app/')
-    }
-  },
-  module: {
-    rules: [
-      // .ts, .tsx
-      {
-        test: /\.tsx?$/,
-        use: [
-          !isProduction && {
-            loader: 'babel-loader',
-            options: { plugins: ['react-hot-loader/babel'] }
-          },
-          'ts-loader'
-        ].filter(Boolean)
-      },
-      // css
-      {
-        test: /\.css$/,
-        use: [
-          isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
-          {
-            loader: 'css-loader',
-            query: {
-              modules: true,
-              sourceMap: !isProduction,
-              importLoaders: 1,
-              localIdentName: isProduction
-                ? '[hash:base64:5]'
-                : '[local]__[hash:base64:5]'
-            }
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'postcss',
-              plugins: [
-                require('postcss-import')({ addDependencyTo: webpack }),
-                require('postcss-url')(),
-                require('postcss-preset-env')({
-                  /* use stage 2 features (defaults) */
-                  stage: 2
-                }),
-                require('postcss-reporter')(),
-                require('postcss-browser-reporter')({
-                  disabled: isProduction
-                })
-              ]
-            }
-          }
-        ]
-      },
-      // static assets
-      { test: /\.html$/, use: 'html-loader' },
-      { test: /\.(a?png|svg)$/, use: 'url-loader?limit=10000' },
-      {
-        test: /\.(jpe?g|gif|bmp|mp3|mp4|ogg|wav|eot|ttf|woff|woff2)$/,
-        use: 'file-loader'
+const tsconfigPath = path.resolve(__dirname, 'tsconfig.json');
+console.log('tsconfigPath = ' + tsconfigPath);
+
+module.exports = (env, argv) => {
+  const isProd = argv.mode === 'production';
+
+  const plugins = [
+    new HtmlWebpackPlugin({
+      template: sourcePath + '/assets/index.html'
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'styles/[name].[contenthash:4].css',
+      chunkFilename: 'styles/[id].[contenthash:4].css'
+    }),
+    new ForkTsCheckerWebpackPlugin({
+      tsconfig: tsconfigPath,
+      tslint: false,
+      eslint: false,
+      checkSyntacticErrors: true
+    })
+  ];
+
+  if (isProd) {
+    plugins.push(
+      new webpack.NormalModuleReplacementPlugin(
+        /\/environments\/environment\.ts/, `${sourcePath}/environments/environment.prod.ts`
+      ),
+      new UglifyJsPlugin({
+        sourceMap: true
+      })
+    );
+  } else {
+    plugins.push(new webpack.NamedModulesPlugin() /*, new webpack.HotModuleReplacementPlugin() */ );
+  }
+
+  const config = {
+    resolve: {
+      extensions: [
+        '.webpack.js',
+        '.web.js',
+        '.js',
+        '.ts',
+        '.tsx'
+      ],
+      alias: {
+        '@app': path.resolve(__dirname, 'src/app'),
+        '@src': path.resolve(__dirname, 'src')
       }
-    ]
-  },
-  optimization: {
-    splitChunks: {
-      name: true,
-      cacheGroups: {
-        commons: {
-          chunks: 'initial',
-          minChunks: 2
+    },
+    context: sourcePath,
+    entry: {
+      app: './main.tsx'
+    },
+    output: {
+      path: distPath,
+      filename: 'scripts/[name].bundle.[hash:4].js',
+    },
+    module: {
+      rules: [{
+          test: /\.(gif|png|jpe?g|svg)$/i,
+          loader: 'file-loader',
+          options: {
+            name: 'assets/images/[name].[ext]'
+          }
+        }, {
+          test: /\.(eot|ttf|woff|woff2)$/,
+          loader: 'file-loader',
+          options: {
+            name: 'assets/fonts/[name].[ext]'
+          }
         },
-        vendors: {
-          test: /[\\/]node_modules[\\/]/,
-          chunks: 'all',
-          priority: -10,
-          filename: isProduction ? 'vendor.[contenthash].js' : 'vendor.[hash].js'
+        {
+          test: /\.html$/,
+          loader: 'html-loader',
+          options: {
+            minimize: true
+          }
+        },
+        {
+          test: /\.css$/,
+          use: [
+            'css-loader'
+          ]
+        },
+        {
+          test: /\.less$/,
+          // use: [
+          //   'style-loader',
+          //   'css-loader',
+          //   'less-loader'
+          // ]
+          use: [
+            MiniCssExtractPlugin.loader,
+            'css-loader',
+            {
+              loader: 'resolve-url-loader',
+              // not 100% sure if this is needed.
+              options: {
+                root: sourcePath + '/'
+              }
+            },
+            'less-loader'
+          ]
+        },
+        {
+          // test: /\.ts$/,
+          test: /\.ts|\.tsx$/,
+          exclude: /node_modules/,
+          include: path.resolve(__dirname, 'src'),
+          use: [{
+            loader: 'ts-loader',
+            options: {
+              configFile: tsconfigPath,
+              // disable type checker - we will use it in fork plugin
+              transpileOnly: false,
+            }
+          }]
+        }
+      ],
+    },
+    plugins,
+    optimization: {
+      splitChunks: {
+        cacheGroups: {
+          commons: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all'
+          }
         }
       }
     },
-    runtimeChunk: true
-  },
-  plugins: [
-    new webpack.EnvironmentPlugin({
-      NODE_ENV: 'development', // use 'development' unless process.env.NODE_ENV is defined
-      DEBUG: false
-    }),
-    new WebpackCleanupPlugin(),
-    new MiniCssExtractPlugin({
-      filename: isProduction ? '[contenthash].css' : '[hash].css',
-      disable: !isProduction
-    }),
-    new HtmlWebpackPlugin({
-      template: 'assets/index.html'
-    })
-  ],
-  devServer: {
-    contentBase: sourcePath,
-    hot: true,
-    inline: true,
-    historyApiFallback: {
-      disableDotRule: true
-    },
-    stats: 'minimal',
-    clientLogLevel: 'warning'
-  },
-  // https://webpack.js.org/configuration/devtool/
-  devtool: isProduction ? 'hidden-source-map' : 'cheap-module-eval-source-map',
-  node: {
-    // workaround for webpack-dev-server issue
-    // https://github.com/webpack/webpack-dev-server/issues/60#issuecomment-103411179
-    fs: 'empty',
-    net: 'empty'
+    devServer: {
+      proxy: {
+        // This is a bit of a hack to handle deep-linking/reloading of paths like '/editor/4'. We will serve up '/' in that case
+        // because of historyApiFallback: true, but the static resources would be served from '/editor/styles/' etc if we didn't
+        // fix them up.
+        '/**': {
+          secure: false,
+          bypass: function (req, res, opt) {
+            let result = req.path;
+            const staticPaths = ['/styles/', '/scripts/', '/assets/'];
+            staticPaths.forEach(staticPath => {
+              const index = result.indexOf(staticPath);
+              if (index !== -1) {
+                result = result.substr(index);
+              }
+            });
+            return result;
+          }
+        }
+      },
+      hot: true,
+      inline: true,
+      disableHostCheck: true,
+      historyApiFallback: true,
+      overlay: true,
+      contentBase: distPath,
+      port: 3000,
+    }
+  };
+
+  if (!isProd) {
+    console.log('using cheap-module-eval-source-map');
+    config.devtool = 'cheap-module-eval-source-map'; // https://www.youtube.com/watch?v=Mi_ZUI6Q1kg
   }
+
+  return config;
 };

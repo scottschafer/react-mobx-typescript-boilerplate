@@ -1,24 +1,41 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
+    "incremental": true,
     "sourceMap": true,
-    "target": "es5",
-    "jsx": "react",
-    "module": "es6",
+    "declaration": false,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "declaration": false,
-    "noImplicitAny": false,
-    "noImplicitReturns": false,
-    "noUnusedLocals": true,
     "removeComments": true,
-    "strictNullChecks": false,
-    "outDir": "build",
-    "lib": ["es6", "es7", "dom"],
-    "baseUrl": "src",
+    "noImplicitAny": false,
+    "target": "ES5",
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "jsx": "react",
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "typeRoots": ["node_modules/@types/"],
+    "rootDirs": [
+      "./src/app/"
+    ],
+    "types": [
+      "jquery",
+      "node",
+      "jasmine",
+      "react"
+    ],
+    "baseUrl": ".",
     "paths": {
-      "app/*": ["./app/*"]
+      "@app/*": ["./src/app/*"]
     }
   },
-  "exclude": ["dist", "build", "node_modules"]
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "src/**/*", "_src/app/components"
+  ],
 }
