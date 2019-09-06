@@ -30,10 +30,10 @@ export class WidgetEditorDataStore extends BaseStore {
 
   protected init() {
     // setup business rules
-    this.autoLoadWidgets();
+    this.autoLoadWidgetForEditing();
   }
 
-  private autoLoadWidgets() {
+  private autoLoadWidgetForEditing() {
     reaction(() => ({
       pathname: this.rootStore.routerStore.location.pathname
     }),

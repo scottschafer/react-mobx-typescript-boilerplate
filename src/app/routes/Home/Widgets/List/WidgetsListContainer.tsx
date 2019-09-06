@@ -7,6 +7,8 @@ import WidgetsListViewStore from './stores/WidgetsListViewStore';
 
 import style from './WidgetsListContainer.less';
 import { WidgetsListFilter } from './components/WidgetsListFilter/WidgetsListFilter';
+import { LoadingIndicator } from '../../components/LoadingIndicator/LoadingIndicator';
+import { WidgetsList } from './components/WidgetsList/WidgetsList';
 
 @inject('rootStore')
 @observer
@@ -38,10 +40,12 @@ export class WidgetsListContainer extends React.Component {
       <div style={style}>
         <h1>Widgets</h1>
 
-        {(this.dataStore.state === 'loading') ? <h2>Loading...</h2> : <></>}
+        {(this.dataStore.state === 'loading') &&
+          <LoadingIndicator></LoadingIndicator>}
 
         {(this.dataStore.state === 'idle') &&
           <div>
+            {/* filters */}
             <WidgetsListFilter
               filterName={this.viewStore.filterName}
               filterMinSprockets={this.viewStore.filterMinSprockets}
@@ -49,28 +53,15 @@ export class WidgetsListContainer extends React.Component {
               onChangeFilterMinSprockets={value => this.viewStore.setFilterMinSprockets(value)} />
 
             <br />
+
             <p>
               <button onClick={() => this.dataStore.adjustSprocketCount(1)}>Add a sprocket to each widget</button>
             </p>
 
-            <table>
-              <tr>
-                <th>Name</th>
-                <th># Sprockets</th>
-                <th></th>
-              </tr>
 
-              {
-                this.viewStore.filteredWidgets.map(widget =>
-                  <tr key={widget.id}>
-                    <td>{widget.text}</td>
-                    <td>{widget.numSprockets}</td>
-                    <td><Link to={`/editor/${widget.id}`}>Edit</Link></td>
-                  </tr>)
-              }
-
-            </table>
-
+            <WidgetsList
+              widgets={this.viewStore.filteredWidgets}>
+            </WidgetsList>
           </div>}
 
       </div>

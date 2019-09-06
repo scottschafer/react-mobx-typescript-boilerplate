@@ -27,6 +27,7 @@ Uppercase subfolders represent child routes. For example, ``Home/Widgets/Editor`
 
 ## Coding Patterns
 - Containers should be lightweight, primarily connnecting components with store properties and instantiating the UI structure.
+- React components should not use state, but instead the `@observer` decorator so it renders when observable properties are changed.
 - Business logic should live in stores, including responding to changes to the current route.
 - Actions that modify store data should be in the respective stores.
 - APIs should be called by stores, typically from within actions.

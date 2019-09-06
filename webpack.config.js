@@ -55,6 +55,7 @@ module.exports = (env, argv) => {
       ],
       alias: {
         '@app': path.resolve(__dirname, 'src/app'),
+        '@assets': path.resolve(__dirname, 'src/assets'),
         '@src': path.resolve(__dirname, 'src')
       }
     },

@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 export class HomeComponent extends React.Component {
   render() {
     return (
+
       <Link to={ROUTES.list}>View widgets</Link>
     );
   }
