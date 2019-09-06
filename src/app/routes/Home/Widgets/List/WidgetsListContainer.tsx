@@ -26,13 +26,12 @@ export class WidgetsListContainer extends React.Component {
     return this.rootStore.widgetsListViewStore;
   }
 
-  readonly handleFilterNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.viewStore.setFilterName(e.target.value);
+  handleFilterNameChange(value: string) {
+    this.viewStore.setFilterName(value);
   }
 
-  readonly handleFilterMinSprocketChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newVal = parseInt(e.target.value, 10);
-    this.viewStore.setFilterMinSprockets(isNaN(newVal) ? 0 : newVal);
+  handleFilterMinSprocketChange(value: number) {
+    this.viewStore.setFilterMinSprockets(value);
   }
 
   render() {
@@ -49,9 +48,8 @@ export class WidgetsListContainer extends React.Component {
             <WidgetsListFilter
               filterName={this.viewStore.filterName}
               filterMinSprockets={this.viewStore.filterMinSprockets}
-              onChangeFilterName={value => this.viewStore.setFilterName(value)}
-              onChangeFilterMinSprockets={value => this.viewStore.setFilterMinSprockets(value)} />
-
+              onChangeFilterName={value => this.handleFilterNameChange(value)}
+              onChangeFilterMinSprockets={value => this.handleFilterMinSprocketChange(value)} />
             <br />
 
             <p>
